@@ -2,6 +2,7 @@ package com.projects.carworkshop_front.service;
 
 import com.google.gson.Gson;
 import com.projects.carworkshop_front.domain.dto.CustomerDto;
+import com.projects.carworkshop_front.domain.dto.SubjectDto;
 import com.projects.carworkshop_front.view.MainView;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -85,7 +88,23 @@ public class CustomerService {
         restTemplate.delete(url);
     }
 
+    public StringBuilder showCustomerMfInfo(String customerNip) {
+        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/mfapi/getCustomerInfoByNip/"+customerNip)
+                .encode()
+                .build()
+                .toUri();
+        StringBuilder sb = new StringBuilder();
 
+        try {
+            SubjectDto response = restTemplate.getForObject(url, SubjectDto.class);
+            sb.append(response.getName()+"\n" + response.getWorkingAddress()+"\n"+"VAT: "+response.getStatusVat()+
+                    "\n"+response.getAccountNumbers()[0]);
+            return sb;
+        }
+        catch (HttpServerErrorException e) {
+            return new StringBuilder("Pole NIP ma nieprawidłową wartość");
+        }
+    }
 
 
 }

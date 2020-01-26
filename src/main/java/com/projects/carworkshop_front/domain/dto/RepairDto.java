@@ -22,8 +22,6 @@ public class RepairDto {
         @JsonProperty
         private String endDate;
         @JsonProperty
-        private String invoiceId;
-        @JsonProperty
         private double totalCost;
 }
 

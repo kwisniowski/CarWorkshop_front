@@ -10,6 +10,7 @@ import com.projects.carworkshop_front.forms.RepairForm;
 import com.projects.carworkshop_front.service.CarService;
 import com.projects.carworkshop_front.service.CustomerService;
 import com.projects.carworkshop_front.service.InvoiceService;
+import com.projects.carworkshop_front.service.RepairService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
@@ -17,12 +18,11 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 
-
-import java.util.Arrays;
 import java.util.List;
 
 @Route
@@ -31,10 +31,12 @@ public class MainView extends VerticalLayout {
     private CarService carService = CarService.getInstance();
     private CustomerService customerService = CustomerService.getInstance();
     private InvoiceService invoiceService = InvoiceService.getInstance();
+    private RepairService repairService = RepairService.getInstance();
 
     private Grid<CarDto> carGrid = new Grid<>(CarDto.class);
     private Grid<CustomerDto> customerGrid = new Grid<>(CustomerDto.class);
     private Grid<InvoiceDto> invoiceGrid = new Grid<>(InvoiceDto.class);
+    private Grid<RepairDto> repairGrid = new Grid<>(RepairDto.class);
 
     private TextField carPlateFilterField = new TextField();
     private TextField carVinFilterField = new TextField();
@@ -54,9 +56,17 @@ public class MainView extends VerticalLayout {
     private Label searchCustomerLabel = new Label(" or ");
     private HorizontalLayout customerSearchFileds = new HorizontalLayout(customerNameFilterField,searchCustomerLabel,customerCompanyFilterField);
 
-    private TextField invoiceNumberFilterField = new TextField();
-    private Label invoiceFilterLabel = new Label("Show by payment status");
-    private ComboBox<InvoiceService.invoicePaid> isPaidList = new ComboBox<InvoiceService.invoicePaid>();
+    private Label invoiceFilterLabel = new Label("Show invoices: ");
+    private ComboBox<InvoiceService.invoicePaid> invoicePaymentComboBox = new ComboBox<InvoiceService.invoicePaid>();
+    private Button showCurrencyCalculator = new Button ("Show currency calculator");
+    private Label currencyPLNLabel = new Label("PLN");
+    private Label currencyLabel = new Label(" = ");
+    private NumberField currencyPLNValue = new NumberField();
+    private ComboBox<InvoiceService.invoiceCurrency> currencyList = new ComboBox<>();
+    private NumberField currencyResult = new NumberField("");
+    private Button hideCalculator = new Button ("Hide calculator");
+    private HorizontalLayout currencyCalculator = new HorizontalLayout();
+    private HorizontalLayout invoiceButtons = new HorizontalLayout();
 
     private CustomerForm customerForm = new CustomerForm(this);
     private CarForm carForm = new CarForm(this);
@@ -65,74 +75,80 @@ public class MainView extends VerticalLayout {
     private Button editCustomer = new Button("Edit customer");
     private Button addNewCustomer = new Button("Add customer");
     private Button removeCustomer = new Button("Remove customer");
+    private Button showCustomerMfInfo = new Button("Show MF status by NIP");
     private HorizontalLayout customerButtons = new HorizontalLayout();
 
     private Grid<RepairDto> repairsGrid = new Grid<RepairDto>();
     private Button addRepair = new Button("Add repair");
-
+    private Button hideRepairsGrid = new Button ("Hide repair grid");
+    private Button deleteRepair = new Button("Delete repair");
+    private Button editRepair = new Button("Edit repair");
+    private HorizontalLayout repairButtons = new HorizontalLayout();
 
     public MainView() {
         ////////////////////////////// Cars section /////////////////////////////
 
-        carGrid.setColumns("id","brand","model","manufactureYear", "vinNumber", "engineSize", "plateNumber","bodyType","customerId");
+        carGrid.setColumns("id", "brand", "model", "manufactureYear", "vinNumber", "engineSize", "plateNumber", "bodyType", "customerId");
 
         carPlateFilterField.setPlaceholder("Find by plate number");
         carPlateFilterField.setClearButtonVisible(true);
         carPlateFilterField.setValueChangeMode(ValueChangeMode.EAGER);
-        carPlateFilterField.addValueChangeListener(event-> carPlateFilerUpdate());
+        carPlateFilterField.addValueChangeListener(event -> carPlateFilerUpdate());
 
         carVinFilterField.setPlaceholder("Find by VIN number");
         carVinFilterField.setClearButtonVisible(true);
         carVinFilterField.setValueChangeMode(ValueChangeMode.EAGER);
-        carVinFilterField.addValueChangeListener(event-> carVinFilerUpdate());
+        carVinFilterField.addValueChangeListener(event -> carVinFilerUpdate());
 
-        addCar.addClickListener(event-> {
-            if (!(customerGrid.asSingleSelect().getValue()==null)) {
+        addCar.addClickListener(event -> {
+            if (!(customerGrid.asSingleSelect().getValue() == null)) {
                 CarDto addedCarDto = new CarDto();
                 addedCarDto.setCustomerId(String.valueOf(customerGrid.asSingleSelect().getValue().getId()));
                 carForm.getCustomerId().setValue(String.valueOf(customerGrid.asSingleSelect().getValue().getId()));
                 carForm.getCustomerId().setReadOnly(true);
                 carForm.setCar(addedCarDto);
-            }
-            else Notification.show("Please select customer",2000, Notification.Position.MIDDLE);
+            } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
         });
 
+        repairGrid.setVisible(false);
         removeCar.setVisible(false);
         editCar.setVisible(false);
         showCarRepairs.setVisible(false);
         addRepairToCar.setVisible(false);
+        hideRepairsGrid.setVisible(false);
+        repairButtons.setVisible(false);
+        showCustomerMfInfo.setVisible(false);
+        currencyCalculator.setVisible(false);
+        hideCalculator.setVisible(false);
 
-        removeCar.addClickListener(event->{
-            if (!(carGrid.asSingleSelect().getValue() ==null)) {
-                  carService.delete(carGrid.asSingleSelect().getValue().getId());
-                  refresh();
-                }
-            else Notification.show("Please select car",2000, Notification.Position.MIDDLE);
+        removeCar.addClickListener(event -> {
+            if (!(carGrid.asSingleSelect().getValue() == null)) {
+                carService.delete(carGrid.asSingleSelect().getValue().getId());
+                refresh();
+            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
         });
 
-        addRepairToCar.addClickListener(evemt-> {
-                    if (!(carGrid.asSingleSelect().getValue() == null)) {
-                        RepairDto addedRepairDto = new RepairDto();
-                        addedRepairDto.setCarId(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
-                        repairForm.getCarId().setValue(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
-                        repairForm.getCarId().setReadOnly(true);
-                        repairForm.setRepair(addedRepairDto);
-                    }
-                    else Notification.show("Please select car",2000, Notification.Position.MIDDLE);
+        addRepairToCar.addClickListener(evemt -> {
+            if (!(carGrid.asSingleSelect().getValue() == null)) {
+                RepairDto addedRepairDto = new RepairDto();
+                addedRepairDto.setCarId(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
+                repairForm.getCarId().setValue(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
+                repairForm.getCarId().setReadOnly(true);
+                repairForm.setRepair(addedRepairDto);
+            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
         });
 
-        editCar.addClickListener(event-> {
+        editCar.addClickListener(event -> {
             if (!(carGrid.asSingleSelect().getValue() == null)) {
                 carForm.setCar(carGrid.asSingleSelect().getValue());
                 carForm.getCustomerId().setReadOnly(true);
-            }
-            else Notification.show("Please select car",2000, Notification.Position.MIDDLE);
+            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
         });
 
-        showAllCars.addClickListener(event->
+        showAllCars.addClickListener(event ->
                 carGrid.setItems(carService.getCarDtos()));
 
-        carButtons.add(showCarRepairs, removeCar , addRepairToCar, editCar, showAllCars);
+        carButtons.add(showCarRepairs, removeCar, addRepairToCar, editCar, showAllCars, hideRepairsGrid);
 
         carGrid.asSingleSelect().addValueChangeListener(event -> {
             removeCar.setVisible(true);
@@ -143,22 +159,35 @@ public class MainView extends VerticalLayout {
         });
 
 
-        carGrid.addItemClickListener(listener->{
-                if (listener.getClickCount()==2) {
+        carGrid.addItemClickListener(listener -> {
+            if (listener.getClickCount() == 2) {
                 List<RepairDto> repairList = listener.getItem().getRepairDtos();
-                for(RepairDto repairDto:repairList) {
-                    Notification.show("Repair from: "+repairDto.getStartDate()+" to  "+repairDto.getEndDate()+ "  , repair cost: "+repairDto.getTotalCost(),
+                for (RepairDto repairDto : repairList) {
+                    Notification.show("Repair from: " + repairDto.getStartDate() + " to  " + repairDto.getEndDate() + "  , repair cost: " + repairDto.getTotalCost(),
                             5000, Notification.Position.MIDDLE);
                 }
             }
         });
 
         filterCarsByCustomer.setVisible(false);
-        filterCarsByCustomer.addClickListener(event-> {
-            if (!(customerGrid.asSingleSelect().getValue()==null)) {
+        filterCarsByCustomer.addClickListener(event -> {
+            if (!(customerGrid.asSingleSelect().getValue() == null)) {
                 carGrid.setItems(carService.filterByCustomerId(String.valueOf(customerGrid.asSingleSelect().getValue().getId())));
-            }
-            else Notification.show("Please select customer",2000, Notification.Position.MIDDLE);
+            } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
+        });
+
+        showCarRepairs.addClickListener(event -> {
+            if (!(carGrid.asSingleSelect().getValue() == null)) {
+                repairGrid.setVisible(true);
+                hideRepairsGrid.setVisible(true);
+                repairService.fetchAll();
+                repairGrid.setItems(repairService.filterByCarId(carGrid.asSingleSelect().getValue().getId()));
+                hideRepairsGrid.setVisible(true);
+            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
+        });
+
+        hideRepairsGrid.addClickListener(event -> {
+            repairGrid.setVisible(false);
         });
 
 
@@ -167,54 +196,87 @@ public class MainView extends VerticalLayout {
         customerNameFilterField.setPlaceholder("Find by lastname");
         customerNameFilterField.setClearButtonVisible(true);
         customerNameFilterField.setValueChangeMode(ValueChangeMode.EAGER);
-        customerNameFilterField.addValueChangeListener(event-> customerNameFilerUpdate());
+        customerNameFilterField.addValueChangeListener(event -> customerNameFilerUpdate());
 
         customerCompanyFilterField.setPlaceholder("Find by company name");
         customerCompanyFilterField.setClearButtonVisible(true);
         customerCompanyFilterField.setValueChangeMode(ValueChangeMode.EAGER);
-        customerCompanyFilterField.addValueChangeListener(event-> customerCompanyFilerUpdate());
+        customerCompanyFilterField.addValueChangeListener(event -> customerCompanyFilerUpdate());
 
         editCustomer.setVisible(false);
-        addNewCustomer.addClickListener(event-> {
+        addNewCustomer.addClickListener(event -> {
             customerGrid.asSingleSelect().clear();
             customerForm.setCustomer(new CustomerDto());
         });
 
-        editCustomer.addClickListener(event-> {
+        editCustomer.addClickListener(event -> {
             if (!(customerGrid.asSingleSelect().getValue() == null)) {
                 customerForm.setCustomer(customerGrid.asSingleSelect().getValue());
+            } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
+        });
+
+        showCustomerMfInfo.addClickListener(event-> {
+            if (!(customerGrid.asSingleSelect().getValue() == null)) {
+                showCustomerMfInfo.setVisible(true);
+                customerService.showCustomerMfInfo(customerGrid.asSingleSelect().getValue().getNipNumber());
+                Notification.show(customerService.showCustomerMfInfo(customerGrid.asSingleSelect().getValue().getNipNumber()).toString(),
+                        5000, Notification.Position.MIDDLE);
             }
-            else Notification.show("Please select customer",2000, Notification.Position.MIDDLE);
         });
 
         customerGrid.setColumns("id", "firstname", "lastname", "company", "nipNumber", "accountNumber", "regonNumber", "emailAddress",
                 "phoneNumber", "vipCustomer", "companyCustomer");
         removeCustomer.setVisible(false);
-        customerButtons.add(addNewCustomer, removeCustomer, addCar, filterCarsByCustomer, editCustomer);
-        removeCustomer.addClickListener(event-> {
-            if (!(customerGrid.asSingleSelect().getValue()==null)) {
+        customerButtons.add(addNewCustomer, removeCustomer, addCar, filterCarsByCustomer, editCustomer, showCustomerMfInfo);
+        removeCustomer.addClickListener(event -> {
+            if (!(customerGrid.asSingleSelect().getValue() == null)) {
                 Long idToBeDeleted = customerGrid.asSingleSelect().getValue().getId();
                 customerService.delete(idToBeDeleted);
                 refresh();
-            }
-            else Notification.show("Please select customer",2000, Notification.Position.MIDDLE);
+            } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
         });
         customerGrid.asSingleSelect().addValueChangeListener(event -> {
-                removeCustomer.setVisible(true);
-                editCustomer.setVisible(true);
-                addCar.setVisible(true);
-                filterCarsByCustomer.setVisible(true);
+            removeCustomer.setVisible(true);
+            showCustomerMfInfo.setVisible(true);
+            editCustomer.setVisible(true);
+            addCar.setVisible(true);
+            filterCarsByCustomer.setVisible(true);
         });
 
         ////////////////////////////// Invoices section /////////////////////////////
 
-        isPaidList.addValueChangeListener(event->invoicePaymentFilterUpdate());
-        isPaidList.setAllowCustomValue(false);
-        isPaidList.setItems(InvoiceService.invoicePaid.values());
-        invoiceGrid.setColumns("id","customerId","paymentPeriod", "paymentLimitDate", "paid", "totalCost","repairId");
+        invoiceButtons.add(invoiceFilterLabel, invoicePaymentComboBox, showCurrencyCalculator, currencyCalculator);
+        invoicePaymentComboBox.addValueChangeListener(event -> invoicePaymentFilterUpdate());
+        invoicePaymentComboBox.setAllowCustomValue(false);
+        invoicePaymentComboBox.setItems(InvoiceService.invoicePaid.values());
+        invoiceGrid.setColumns("id", "customerId", "paymentPeriod", "paymentLimitDate", "paid", "totalCost", "repairId");
 
+        currencyList.setItems(InvoiceService.invoiceCurrency.values());
+        currencyList.setAllowCustomValue(false);
+        currencyList.setValue(InvoiceService.invoiceCurrency.EUR);
+        currencyCalculator.add(currencyPLNValue, currencyPLNLabel, currencyLabel, currencyResult, currencyList, hideCalculator);
 
-        add(customerSearchFileds, customerGrid, customerButtons , carForm, customerForm, carSearchFileds, carGrid, carButtons, repairForm, isPaidList, invoiceGrid);
+        showCurrencyCalculator.addClickListener(event-> {
+            hideCalculator.setVisible(true);
+            currencyCalculator.setVisible(true);
+            });
+
+        hideCalculator.addClickListener(event -> currencyCalculator.setVisible(false));
+        currencyList.addValueChangeListener( event -> {
+            double factor = invoiceService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
+            currencyResult.setValue(currencyPLNValue.getValue()/factor);
+        });
+
+        currencyPLNValue.addValueChangeListener(event-> {
+            double factor = invoiceService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
+            currencyResult.setValue(currencyPLNValue.getValue()/factor);
+        });
+
+        add(customerSearchFileds, customerGrid, customerButtons, carForm, customerForm, carSearchFileds, carGrid, carButtons,
+                repairGrid, repairForm, repairButtons, invoiceButtons, invoiceGrid);
+
+        //////////////////////////////////////////////////////////////////////////////
+
         customerForm.setCustomer(null);
         carForm.setCar(null);
         repairForm.setRepair(null);
@@ -223,6 +285,26 @@ public class MainView extends VerticalLayout {
 
         /////////////////////////////// Repairs section ///////////////////////////////
 
+        repairGrid.setColumns("id", "startDate", "endDate", "totalCost");
+        repairGrid.addItemClickListener(event -> {
+            repairButtons.setVisible(true);
+        });
+        repairButtons.add(editRepair, deleteRepair);
+
+        deleteRepair.addClickListener(event -> {
+            if (!(repairGrid.asSingleSelect().getValue() == null)) {
+                repairService.delete(repairGrid.asSingleSelect().getValue().getId());
+                refresh();
+            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
+        });
+
+        editRepair.addClickListener(event -> {
+            if (!(repairGrid.asSingleSelect().getValue() == null)) {
+                repairForm.setRepair(repairGrid.asSingleSelect().getValue());
+            }
+        });
+
+        ///////////////////////////////////////////////////////////////////////////////
     }
 
     public void refresh() {
@@ -253,13 +335,13 @@ public class MainView extends VerticalLayout {
     }
 
     public void invoicePaymentFilterUpdate() {
-        if (isPaidList.getValue().equals(InvoiceService.invoicePaid.PAID)) {
+        if (invoicePaymentComboBox.getValue().equals(InvoiceService.invoicePaid.PAID)) {
             invoiceGrid.setItems(invoiceService.filerByPaymentCondition(true));
         }
-        if (isPaidList.getValue().equals(InvoiceService.invoicePaid.UNPAID)) {
+        if (invoicePaymentComboBox.getValue().equals(InvoiceService.invoicePaid.UNPAID)) {
             invoiceGrid.setItems(invoiceService.filerByPaymentCondition(false));
         }
-        if (isPaidList.getValue().equals(InvoiceService.invoicePaid.ALL)) {
+        if (invoicePaymentComboBox.getValue().equals(InvoiceService.invoicePaid.ALL)) {
             invoiceGrid.setItems(invoiceService.getInvoices());
         }
     }

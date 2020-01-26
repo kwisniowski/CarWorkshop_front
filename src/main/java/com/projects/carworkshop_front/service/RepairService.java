@@ -10,10 +10,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 public class RepairService {
@@ -30,6 +28,10 @@ public class RepairService {
             repairService = new RepairService();
         }
         return  repairService;
+    }
+
+    public Set<RepairDto> getRepairs() {
+        return new HashSet<>(repairDtos);
     }
 
     public void fetchAll() {
@@ -52,6 +54,21 @@ public class RepairService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(jsonContent,headers);
         restTemplate.put(url,httpEntity);
+
+    }
+
+    public List<RepairDto> filterByCarId(long carId) {
+        return repairDtos.stream()
+                .filter(repair-> Long.valueOf(repair.getCarId()).equals(carId))
+                .collect(Collectors.toList());
+    }
+
+    public void delete(long id) {
+        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/repairs/"+id)
+                .encode()
+                .build()
+                .toUri();
+        restTemplate.delete(url);
     }
 
 }
