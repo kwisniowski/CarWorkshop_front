@@ -1,16 +1,11 @@
 package com.projects.carworkshop_front.view;
 
-import com.projects.carworkshop_front.domain.dto.CarDto;
-import com.projects.carworkshop_front.domain.dto.CustomerDto;
-import com.projects.carworkshop_front.domain.dto.InvoiceDto;
-import com.projects.carworkshop_front.domain.dto.RepairDto;
+import com.projects.carworkshop_front.domain.dto.*;
 import com.projects.carworkshop_front.forms.CarForm;
 import com.projects.carworkshop_front.forms.CustomerForm;
 import com.projects.carworkshop_front.forms.RepairForm;
-import com.projects.carworkshop_front.service.CarService;
-import com.projects.carworkshop_front.service.CustomerService;
-import com.projects.carworkshop_front.service.InvoiceService;
-import com.projects.carworkshop_front.service.RepairService;
+import com.projects.carworkshop_front.forms.SparePartForm;
+import com.projects.carworkshop_front.service.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
@@ -32,11 +27,13 @@ public class MainView extends VerticalLayout {
     private CustomerService customerService = CustomerService.getInstance();
     private InvoiceService invoiceService = InvoiceService.getInstance();
     private RepairService repairService = RepairService.getInstance();
+    private SparePartService sparePartService = SparePartService.getInstance();
 
     private Grid<CarDto> carGrid = new Grid<>(CarDto.class);
     private Grid<CustomerDto> customerGrid = new Grid<>(CustomerDto.class);
     private Grid<InvoiceDto> invoiceGrid = new Grid<>(InvoiceDto.class);
     private Grid<RepairDto> repairGrid = new Grid<>(RepairDto.class);
+    private Grid<SparePartDto> sparePartsGrid = new Grid<>(SparePartDto.class);
 
     private TextField carPlateFilterField = new TextField();
     private TextField carVinFilterField = new TextField();
@@ -71,6 +68,7 @@ public class MainView extends VerticalLayout {
     private CustomerForm customerForm = new CustomerForm(this);
     private CarForm carForm = new CarForm(this);
     private RepairForm repairForm = new RepairForm(this);
+    private SparePartForm sparePartForm = new SparePartForm(this);
 
     private Button editCustomer = new Button("Edit customer");
     private Button addNewCustomer = new Button("Add customer");
@@ -78,12 +76,16 @@ public class MainView extends VerticalLayout {
     private Button showCustomerMfInfo = new Button("Show MF status by NIP");
     private HorizontalLayout customerButtons = new HorizontalLayout();
 
-    private Grid<RepairDto> repairsGrid = new Grid<RepairDto>();
-    private Button addRepair = new Button("Add repair");
     private Button hideRepairsGrid = new Button ("Hide repair grid");
     private Button deleteRepair = new Button("Delete repair");
     private Button editRepair = new Button("Edit repair");
     private HorizontalLayout repairButtons = new HorizontalLayout();
+
+    private Button addSparePart = new Button ("Add spare part");
+    private Button deleteSparePart = new Button("Delete spare part");
+    private Button editSparePart = new Button("Edit spare part");
+    private HorizontalLayout sparePartsButtons = new HorizontalLayout();
+
 
     public MainView() {
         ////////////////////////////// Cars section /////////////////////////////
@@ -120,6 +122,7 @@ public class MainView extends VerticalLayout {
         showCustomerMfInfo.setVisible(false);
         currencyCalculator.setVisible(false);
         hideCalculator.setVisible(false);
+        sparePartsButtons.setVisible(false);
 
         removeCar.addClickListener(event -> {
             if (!(carGrid.asSingleSelect().getValue() == null)) {
@@ -273,7 +276,7 @@ public class MainView extends VerticalLayout {
         });
 
         add(customerSearchFileds, customerGrid, customerButtons, carForm, customerForm, carSearchFileds, carGrid, carButtons,
-                repairGrid, repairForm, repairButtons, invoiceButtons, invoiceGrid);
+                repairGrid, repairForm, repairButtons, invoiceButtons, invoiceGrid, sparePartsGrid, addSparePart, sparePartsButtons, sparePartForm);
 
         //////////////////////////////////////////////////////////////////////////////
 
@@ -304,7 +307,34 @@ public class MainView extends VerticalLayout {
             }
         });
 
-        ///////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////// SpareParts section ///////////////////////////////
+
+        sparePartsButtons.add(editSparePart, deleteSparePart);
+        sparePartsGrid.setColumns("id", "carBrand", "model", "manufacturer", "price");
+        sparePartForm.setSparePart(null);
+        sparePartsGrid.addItemClickListener(event -> {
+            sparePartsButtons.setVisible(true);
+        });
+
+        addSparePart.addClickListener(event -> {
+            sparePartForm.setSparePart(new SparePartDto());
+        });
+
+        deleteSparePart.addClickListener(event -> {
+            if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
+                sparePartService.delete(sparePartsGrid.asSingleSelect().getValue().getId());
+                refresh();
+            } else Notification.show("Please select spare part", 2000, Notification.Position.MIDDLE);
+        });
+
+        editSparePart.addClickListener(event -> {
+            if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
+                sparePartForm.setSparePart(sparePartsGrid.asSingleSelect().getValue());
+            }
+        });
+
+
+        ////////////////////////////////////////////////////////////////////////////////
     }
 
     public void refresh() {
@@ -316,6 +346,8 @@ public class MainView extends VerticalLayout {
         invoiceGrid.setItems(invoiceService.getInvoices());
         removeCustomer.setVisible(false);
         removeCar.setVisible(false);
+        sparePartService.fetchAll();
+        sparePartsGrid.setItems(sparePartService.getSparePartDtos());
     }
 
     public void carPlateFilerUpdate() {

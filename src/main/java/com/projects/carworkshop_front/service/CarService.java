@@ -40,10 +40,6 @@ public class CarService {
         return new HashSet<>(carDtos);
     }
 
-    public void addCar (CarDto carDto) {
-        this.carDtos.add(carDto);
-    }
-
     public void fetchAll() {
         URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"cars")
                 .encode()
@@ -77,16 +73,16 @@ public class CarService {
     public void save(CarDto carDto) {
         Gson gson = new Gson();
         String jsonContent = gson.toJson(carDto);
-        String url = "http://localhost:8080/v1/carworkshop/api/cars";
+        String url = appConfig.getBackendEndpoint()+"cars";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(jsonContent,headers);
-        restTemplate.put(url,httpEntity);
+        restTemplate.postForObject(url,httpEntity,Void.class);
     }
 
     public void delete(long id) {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/cars/"+id)
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"cars/"+id)
                 .encode()
                 .build()
                 .toUri();

@@ -77,7 +77,7 @@ public class CustomerService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(jsonContent,headers);
-        restTemplate.put(url,httpEntity);
+        restTemplate.postForObject(url,httpEntity,Void.class);
     }
 
     public void delete(Long id) {
