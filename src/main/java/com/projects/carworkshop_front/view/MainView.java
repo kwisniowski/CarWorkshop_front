@@ -346,6 +346,8 @@ public class MainView extends VerticalLayout {
         invoiceGrid.setItems(invoiceService.getInvoices());
         removeCustomer.setVisible(false);
         removeCar.setVisible(false);
+        repairService.fetchAll();
+        repairGrid.setItems(repairService.getRepairs());
         sparePartService.fetchAll();
         sparePartsGrid.setItems(sparePartService.getSparePartDtos());
     }
