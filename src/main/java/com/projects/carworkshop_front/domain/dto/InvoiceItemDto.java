@@ -20,4 +20,9 @@ public class InvoiceItemDto {
     private int quantity;
     @JsonProperty
     private long invoiceId;
+
+    public InvoiceItemDto(long sparePartId, int quantity) {
+        this.sparePartId = sparePartId;
+        this.quantity = quantity;
+    }
 }

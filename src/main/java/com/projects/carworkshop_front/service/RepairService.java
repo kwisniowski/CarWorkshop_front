@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ServerErrorException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -20,6 +21,8 @@ public class RepairService {
 
     private static RepairService repairService;
     private List<RepairDto> repairDtos;
+    public enum repairCurrency {CHF, USD, EUR, GBP}
+
     private RepairService() {
     }
 
@@ -69,6 +72,20 @@ public class RepairService {
                 .build()
                 .toUri();
         restTemplate.delete(url);
+    }
+
+    public double getCurrencyFactorFromNBP(String currencyCode) {
+        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/currency/"+currencyCode)
+                .encode()
+                .build()
+                .toUri();
+        try {
+            return restTemplate.getForObject(url,Double.class);
+        }
+        catch (ServerErrorException e) {
+            return 0.0;
+        }
+
     }
 
 }

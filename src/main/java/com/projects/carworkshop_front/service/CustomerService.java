@@ -89,7 +89,7 @@ public class CustomerService {
     }
 
     public StringBuilder showCustomerMfInfo(String customerNip) {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/mfapi/getCustomerInfoByNip/"+customerNip)
+        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/getCustomerInfoByNip/"+customerNip)
                 .encode()
                 .build()
                 .toUri();

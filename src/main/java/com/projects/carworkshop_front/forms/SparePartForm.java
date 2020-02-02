@@ -1,9 +1,6 @@
 package com.projects.carworkshop_front.forms;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.projects.carworkshop_front.domain.dto.CarDto;
 import com.projects.carworkshop_front.domain.dto.SparePartDto;
-import com.projects.carworkshop_front.service.CarService;
 import com.projects.carworkshop_front.service.SparePartService;
 import com.projects.carworkshop_front.view.MainView;
 import com.vaadin.flow.component.button.Button;
@@ -13,10 +10,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import sun.applet.Main;
 
-import java.awt.*;
-import java.text.NumberFormat;
 
 public class SparePartForm extends FormLayout {
 
@@ -25,7 +19,7 @@ public class SparePartForm extends FormLayout {
     private ComboBox<String> carBrand = new ComboBox<>("Brand");
     private TextField model = new TextField("Model");
     private TextField manufacturer = new TextField("Manufacturer");
-    private NumberField price = new NumberField();
+    private NumberField price = new NumberField("Price");
 
     private Button save = new Button("Save");
     private SparePartService service = SparePartService.getInstance();

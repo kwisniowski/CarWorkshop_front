@@ -23,5 +23,6 @@ public class RepairDto {
         private String endDate;
         @JsonProperty
         private double totalCost;
+
 }
 

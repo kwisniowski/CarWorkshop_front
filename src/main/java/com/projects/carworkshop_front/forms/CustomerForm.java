@@ -1,9 +1,7 @@
 package com.projects.carworkshop_front.forms;
 
 import com.projects.carworkshop_front.domain.dto.CustomerDto;
-import com.projects.carworkshop_front.domain.dto.InvoiceDto;
 import com.projects.carworkshop_front.service.CustomerService;
-import com.projects.carworkshop_front.service.InvoiceService;
 import com.projects.carworkshop_front.view.MainView;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;

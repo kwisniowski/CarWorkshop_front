@@ -12,6 +12,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class SparePartService {
@@ -65,4 +66,18 @@ public class SparePartService {
         restTemplate.delete(url);
     }
 
+    public SparePartDto fetchOne(Long spareId) {
+            URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"spares/"+spareId)
+                    .encode()
+                    .build()
+                    .toUri();
+            Optional<SparePartDto> sparePart = Optional.ofNullable(restTemplate.getForObject(url,SparePartDto.class));
+            return sparePart.orElse(null);
+    }
+
+    public List<SparePartDto> filterByCarBrand (String searchString) {
+        return sparePartDtos.stream()
+                .filter(s->s.getCarBrand().equals(searchString))
+                .collect(Collectors.toList());
+    }
 }
