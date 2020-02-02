@@ -15,8 +15,8 @@ public class ApplicationEventDto {
     private enum EventType {SEND,CREATED,DELETED,UPDATED}
 
     private long id;
-    private ApplicationEvent.EventType type;
-    private LocalDate date;
-    private LocalTime time;
+    private String type;
+    private String date;
+    private String time;
     private String info;
 }

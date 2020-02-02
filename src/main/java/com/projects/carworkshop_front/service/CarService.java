@@ -3,12 +3,10 @@ package com.projects.carworkshop_front.service;
 import com.google.gson.Gson;
 import com.projects.carworkshop_front.config.AppConfig;
 import com.projects.carworkshop_front.domain.dto.CarDto;
-import com.projects.carworkshop_front.domain.dto.CustomerDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -19,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class CarService {
+
 
     RestTemplate restTemplate = new RestTemplate();
     AppConfig appConfig = new AppConfig();

@@ -37,11 +37,13 @@ public class MainView extends VerticalLayout {
     private CustomerService customerService = CustomerService.getInstance();
     private RepairService repairService = RepairService.getInstance();
     private SparePartService sparePartService = SparePartService.getInstance();
+    private EventService eventService = EventService.getInstance();
 
     private Grid<CarDto> carGrid = new Grid<>(CarDto.class);
     private Grid<CustomerDto> customerGrid = new Grid<>(CustomerDto.class);
     private Grid<RepairDto> repairGrid = new Grid<>(RepairDto.class);
     private Grid<SparePartDto> sparePartsGrid = new Grid<>(SparePartDto.class);
+    private Grid<ApplicationEventDto> eventGrid = new Grid<>(ApplicationEventDto.class);
 
     private TextField carPlateFilterField = new TextField();
     private TextField carVinFilterField = new TextField();
@@ -102,17 +104,20 @@ public class MainView extends VerticalLayout {
     private Button addPartButton = new Button("Add");
     private HorizontalLayout sparePartsButtons = new HorizontalLayout();
 
+    private Button showLogs = new Button("Show logs");
+    private Button hideLogs = new Button("Hide logs");
+
 
     public MainView() {
 
         customersLayout.add(customersLabel);
-        customersLayout.setHorizontalComponentAlignment(Alignment.CENTER,customersLabel);
+        customersLayout.setHorizontalComponentAlignment(Alignment.CENTER, customersLabel);
         carsLayout.add(carsLabel);
-        carsLayout.setHorizontalComponentAlignment(Alignment.CENTER,carsLabel);
+        carsLayout.setHorizontalComponentAlignment(Alignment.CENTER, carsLabel);
         repairsLayout.add(repairsLabel);
-        repairsLayout.setHorizontalComponentAlignment(Alignment.CENTER,repairsLabel);
+        repairsLayout.setHorizontalComponentAlignment(Alignment.CENTER, repairsLabel);
         sparePartsLayout.add(sparePartsLabel);
-        sparePartsLayout.setHorizontalComponentAlignment(Alignment.CENTER,sparePartsLabel);
+        sparePartsLayout.setHorizontalComponentAlignment(Alignment.CENTER, sparePartsLabel);
 
         ////////////////////////////// Cars section /////////////////////////////
 
@@ -149,6 +154,8 @@ public class MainView extends VerticalLayout {
         hideCalculator.setVisible(false);
         costAddingGroup.setVisible(false);
         addCostToRepair.setVisible(false);
+        eventGrid.setVisible(false);
+        hideLogs.setVisible(false);
 
         removeCar.addClickListener(event -> {
             if (!(carGrid.asSingleSelect().getValue() == null)) {
@@ -245,7 +252,7 @@ public class MainView extends VerticalLayout {
             } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
         });
 
-        showCustomerMfInfo.addClickListener(event-> {
+        showCustomerMfInfo.addClickListener(event -> {
             if (!(customerGrid.asSingleSelect().getValue() == null)) {
                 showCustomerMfInfo.setVisible(true);
                 customerService.showCustomerMfInfo(customerGrid.asSingleSelect().getValue().getNipNumber());
@@ -280,24 +287,25 @@ public class MainView extends VerticalLayout {
         currencyList.setValue(RepairService.repairCurrency.EUR);
         currencyCalculator.add(currencyPLNValue, currencyPLNLabel, currencyLabel, currencyResult, currencyList, hideCalculator);
 
-        showCurrencyCalculator.addClickListener(event-> {
+        showCurrencyCalculator.addClickListener(event -> {
             hideCalculator.setVisible(true);
             currencyCalculator.setVisible(true);
-            });
-
-        hideCalculator.addClickListener(event -> currencyCalculator.setVisible(false));
-        currencyList.addValueChangeListener( event -> {
-            double factor = repairService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
-            currencyResult.setValue(currencyPLNValue.getValue()/factor);
         });
 
-        currencyPLNValue.addValueChangeListener(event-> {
+        hideCalculator.addClickListener(event -> currencyCalculator.setVisible(false));
+        currencyList.addValueChangeListener(event -> {
             double factor = repairService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
-            currencyResult.setValue(currencyPLNValue.getValue()/factor);
+            currencyResult.setValue(currencyPLNValue.getValue() / factor);
+        });
+
+        currencyPLNValue.addValueChangeListener(event -> {
+            double factor = repairService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
+            currencyResult.setValue(currencyPLNValue.getValue() / factor);
         });
 
         add(customersLayout, customerSearchFileds, customerGrid, customerButtons, carForm, customerForm, carsLayout, carSearchFileds, carGrid, carButtons,
-                repairsLayout, repairGrid, repairForm, repairButtons, addCostToRepair , sparePartsLayout, sparePartFilterGroup, sparePartsGrid, addSparePart, sparePartsButtons, sparePartForm);
+                repairsLayout, repairGrid, repairForm, repairButtons, addCostToRepair, sparePartsLayout, sparePartFilterGroup, sparePartsGrid, addSparePart,
+                sparePartsButtons, sparePartForm, showLogs, hideLogs, eventGrid);
 
         //////////////////////////////////////////////////////////////////////////////
 
@@ -331,34 +339,32 @@ public class MainView extends VerticalLayout {
 
         costAddingGroup.add(costLabel, sparePartSelected, sparePartQty, addPartButton);
 
-        addCostToRepair.addClickListener(event-> {
-                costAddingGroup.setVisible(true);
-                sparePartsGrid.setVisible(true);
+        addCostToRepair.addClickListener(event -> {
+            costAddingGroup.setVisible(true);
+            sparePartsGrid.setVisible(true);
         });
 
         addPartButton.addClickListener(event -> {
             if (!(repairGrid.asSingleSelect().getValue() == null)) {
                 if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
-                     RepairDto tempRepairDto = repairGrid.asSingleSelect().getValue();
-                     double tempCost = tempRepairDto.getTotalCost();
-                     if ((sparePartQty.getValue()!=null)) {
-                         if (sparePartQty.getValue()>0) {
-                             repairGrid.asSingleSelect().getValue().setTotalCost(tempCost + (sparePartsGrid.asSingleSelect().getValue().getPrice() *
-                                     sparePartQty.getValue()));
-                             repairService.save(tempRepairDto);
-                             refresh();
-                         }
-                     }
-                }
-                else Notification.show("Please select spare part to update",2000, Notification.Position.MIDDLE);
-            }
-            else Notification.show("Please select repair to update",2000, Notification.Position.MIDDLE);
-        costAddingGroup.setVisible(false);
+                    RepairDto tempRepairDto = repairGrid.asSingleSelect().getValue();
+                    double tempCost = tempRepairDto.getTotalCost();
+                    if ((sparePartQty.getValue() != null)) {
+                        if (sparePartQty.getValue() > 0) {
+                            repairGrid.asSingleSelect().getValue().setTotalCost(tempCost + (sparePartsGrid.asSingleSelect().getValue().getPrice() *
+                                    sparePartQty.getValue()));
+                            repairService.save(tempRepairDto);
+                            refresh();
+                        }
+                    }
+                } else Notification.show("Please select spare part to update", 2000, Notification.Position.MIDDLE);
+            } else Notification.show("Please select repair to update", 2000, Notification.Position.MIDDLE);
+            costAddingGroup.setVisible(false);
         });
 
         /////////////////////////////// SpareParts section ///////////////////////////////
 
-        sparePartFilterGroup.add(sparePartSearchLabel,sparePartFilter, showAllSparePartsButton);
+        sparePartFilterGroup.add(sparePartSearchLabel, sparePartFilter, showAllSparePartsButton);
         sparePartsButtons.add(editSparePart, deleteSparePart);
         sparePartsGrid.setColumns("id", "carBrand", "model", "manufacturer", "price");
         sparePartForm.setSparePart(null);
@@ -366,13 +372,13 @@ public class MainView extends VerticalLayout {
             sparePartsButtons.setVisible(true);
             sparePartSelected.setValue(sparePartsGrid.asSingleSelect().getValue().getModel());
         });
-        showAllSparePartsButton.addClickListener(event-> {
+        showAllSparePartsButton.addClickListener(event -> {
             sparePartsGrid.setItems(sparePartService.getSparePartDtos());
         });
 
         sparePartFilter.setItems(Car.CarBrand.values());
         sparePartFilter.setAllowCustomValue(false);
-        sparePartFilter.addValueChangeListener(event-> sparePartsFilterUpdate());
+        sparePartFilter.addValueChangeListener(event -> sparePartsFilterUpdate());
 
         addSparePart.addClickListener(event -> {
             sparePartForm.setSparePart(new SparePartDto());
@@ -392,8 +398,24 @@ public class MainView extends VerticalLayout {
         });
 
 
-        ////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////  Events section  ////////////////////////////////////////
+
+        showLogs.addClickListener(event -> {
+            eventGrid.setVisible(true);
+            hideLogs.setVisible(true);
+        });
+        hideLogs.addClickListener(event -> {
+            eventGrid.setVisible(false);
+            hideLogs.setVisible(false);
+        });
+
+        eventGrid.setColumns("id", "type", "date", "time", "info");
+        eventGrid.setItems(eventService.getEvents());
     }
+    private String type;
+    private String date;
+    private String time;
+    private String info;
 
     public void refresh() {
         carService.fetchAll();
@@ -406,6 +428,7 @@ public class MainView extends VerticalLayout {
         repairGrid.setItems(repairService.getRepairs());
         sparePartService.fetchAll();
         sparePartsGrid.setItems(sparePartService.getSparePartDtos());
+        eventService.fetchAll();
     }
 
     public void carPlateFilerUpdate() {
