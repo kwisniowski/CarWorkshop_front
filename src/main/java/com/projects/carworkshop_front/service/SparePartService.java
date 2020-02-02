@@ -1,11 +1,8 @@
 package com.projects.carworkshop_front.service;
 
-import com.google.gson.Gson;
+
 import com.projects.carworkshop_front.config.AppConfig;
 import com.projects.carworkshop_front.domain.dto.SparePartDto;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -14,11 +11,11 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component
 public class SparePartService {
 
     RestTemplate restTemplate = new RestTemplate();
-    AppConfig appConfig = new AppConfig();
+    private JsonBuilder<SparePartDto> jsonBuilder = new JsonBuilder<>();
+    AppConfig appConfig = AppConfig.getInstance();
     private static SparePartService sparePartService;
     private List<SparePartDto> sparePartDtos;
 
@@ -48,14 +45,13 @@ public class SparePartService {
     }
 
     public void save(SparePartDto sparePartDto) {
-        Gson gson = new Gson();
-        String jsonContent = gson.toJson(sparePartDto);
         String url = appConfig.getBackendEndpoint()+"spares";
+        restTemplate.postForObject(url,jsonBuilder.prepareJson(sparePartDto),Void.class);
+    }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(jsonContent,headers);
-        restTemplate.postForObject(url,httpEntity, Void.class);
+    public void update(SparePartDto sparePartDto) {
+        String url = appConfig.getBackendEndpoint()+"spares";
+        restTemplate.put(url,jsonBuilder.prepareJson(sparePartDto));
     }
 
     public void delete(long id) {
@@ -64,15 +60,6 @@ public class SparePartService {
                 .build()
                 .toUri();
         restTemplate.delete(url);
-    }
-
-    public SparePartDto fetchOne(Long spareId) {
-            URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"spares/"+spareId)
-                    .encode()
-                    .build()
-                    .toUri();
-            Optional<SparePartDto> sparePart = Optional.ofNullable(restTemplate.getForObject(url,SparePartDto.class));
-            return sparePart.orElse(null);
     }
 
     public List<SparePartDto> filterByCarBrand (String searchString) {

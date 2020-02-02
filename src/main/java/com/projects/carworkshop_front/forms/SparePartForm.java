@@ -10,8 +10,11 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import lombok.Getter;
+import lombok.Setter;
 
-
+@Getter
+@Setter
 public class SparePartForm extends FormLayout {
 
     public String[] carBrandValues = {"CITROEN","PEUGEOT","RENAULT"};
@@ -22,6 +25,7 @@ public class SparePartForm extends FormLayout {
     private NumberField price = new NumberField("Price");
 
     private Button save = new Button("Save");
+    private Button update = new Button("Update");
     private SparePartService service = SparePartService.getInstance();
     private Binder<SparePartDto> binder = new Binder<>(SparePartDto.class);
 
@@ -33,14 +37,23 @@ public class SparePartForm extends FormLayout {
         carBrand.setAllowCustomValue(false);
         this.mainView = mainView;
         save.addClickListener(event -> save());
-        binder.bindInstanceFields(this);
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        add(carBrand, model, manufacturer,price,save);
+        binder.bindInstanceFields(this);
+        update.addClickListener(event -> update());
+        update.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        add(carBrand, model, manufacturer,price,save, update);
     }
 
     private void save() {
         SparePartDto sparePartDto = binder.getBean();
         service.save(sparePartDto);
+        mainView.refresh();
+        setSparePart(null);
+    }
+
+    private void update() {
+        SparePartDto sparePartDto = binder.getBean();
+        service.update(sparePartDto);
         mainView.refresh();
         setSparePart(null);
     }

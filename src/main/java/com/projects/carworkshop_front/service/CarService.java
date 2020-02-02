@@ -3,10 +3,12 @@ package com.projects.carworkshop_front.service;
 import com.google.gson.Gson;
 import com.projects.carworkshop_front.config.AppConfig;
 import com.projects.carworkshop_front.domain.dto.CarDto;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -15,12 +17,11 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
 public class CarService {
 
-
-    RestTemplate restTemplate = new RestTemplate();
-    AppConfig appConfig = new AppConfig();
+    private RestTemplate restTemplate = new RestTemplate();
+    private AppConfig appConfig = AppConfig.getInstance();
+    private JsonBuilder<CarDto> jsonBuilder = new JsonBuilder<>();
 
     private List<CarDto> carDtos;
     private static CarService carservice;
@@ -70,14 +71,13 @@ public class CarService {
     }
 
     public void save(CarDto carDto) {
-        Gson gson = new Gson();
-        String jsonContent = gson.toJson(carDto);
         String url = appConfig.getBackendEndpoint()+"cars";
+        restTemplate.postForObject(url,(carDto),Void.class);
+    }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(jsonContent,headers);
-        restTemplate.postForObject(url,httpEntity,Void.class);
+    public void update(CarDto carDto) {
+        String url = appConfig.getBackendEndpoint()+"cars";
+        restTemplate.put(url,jsonBuilder.prepareJson(carDto));
     }
 
     public void delete(long id) {
@@ -87,5 +87,4 @@ public class CarService {
                 .toUri();
         restTemplate.delete(url);
     }
-
 }

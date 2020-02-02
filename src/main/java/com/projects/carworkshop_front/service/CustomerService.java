@@ -1,31 +1,20 @@
 package com.projects.carworkshop_front.service;
 
-import com.google.gson.Gson;
+import com.projects.carworkshop_front.config.AppConfig;
 import com.projects.carworkshop_front.domain.dto.CustomerDto;
 import com.projects.carworkshop_front.domain.dto.SubjectDto;
-import com.projects.carworkshop_front.view.MainView;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Getter
-@Setter
 public class CustomerService {
 
-    @Value("http://localhost:8080/v1/carworkshop/api/")
     private String backendControllerEndpoint;
-
+    private AppConfig appConfig = AppConfig.getInstance();
+    private JsonBuilder<CustomerDto> jsonBuilder = new JsonBuilder<>();
     RestTemplate restTemplate = new RestTemplate();
     private static CustomerService customerService;
     private List<CustomerDto> customerDtos;
@@ -46,7 +35,7 @@ public class CustomerService {
 
 
     public void fetchAll() {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/customers")
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"customers")
                 .encode()
                 .build()
                 .toUri();
@@ -70,18 +59,17 @@ public class CustomerService {
     }
 
     public void save(CustomerDto customerDto) {
-        Gson gson = new Gson();
-        String jsonContent = gson.toJson(customerDto);
-        String url = "http://localhost:8080/v1/carworkshop/api/customers";
+        String url = appConfig.getBackendEndpoint()+"customers";
+        restTemplate.postForObject(url,jsonBuilder.prepareJson(customerDto),Void.class);
+    }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(jsonContent,headers);
-        restTemplate.postForObject(url,httpEntity,Void.class);
+    public void update(CustomerDto customerDto) {
+        String url = appConfig.getBackendEndpoint()+"customers";
+        restTemplate.put(url,jsonBuilder.prepareJson(customerDto));
     }
 
     public void delete(Long id) {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/customers/"+id)
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"customers/"+id)
                 .encode()
                 .build()
                 .toUri();
@@ -89,7 +77,7 @@ public class CustomerService {
     }
 
     public StringBuilder showCustomerMfInfo(String customerNip) {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/getCustomerInfoByNip/"+customerNip)
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"getCustomerInfoByNip/"+customerNip)
                 .encode()
                 .build()
                 .toUri();
@@ -105,6 +93,4 @@ public class CustomerService {
             return new StringBuilder("Pole NIP ma nieprawidłową wartość");
         }
     }
-
-
 }

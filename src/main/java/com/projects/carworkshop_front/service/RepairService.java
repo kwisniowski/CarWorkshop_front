@@ -1,10 +1,7 @@
 package com.projects.carworkshop_front.service;
 
-import com.google.gson.Gson;
+import com.projects.carworkshop_front.config.AppConfig;
 import com.projects.carworkshop_front.domain.dto.RepairDto;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ServerErrorException;
@@ -14,11 +11,11 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Controller
 public class RepairService {
 
     RestTemplate restTemplate = new RestTemplate();
-
+    private JsonBuilder<RepairDto> jsonBuilder = new JsonBuilder<>();
+    private AppConfig appConfig = AppConfig.getInstance();
     private static RepairService repairService;
     private List<RepairDto> repairDtos;
     public enum repairCurrency {CHF, USD, EUR, GBP}
@@ -38,7 +35,7 @@ public class RepairService {
     }
 
     public void fetchAll() {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/repairs")
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"repairs")
                 .encode()
                 .build()
                 .toUri();
@@ -49,15 +46,13 @@ public class RepairService {
     }
 
     public void save(RepairDto repairDto) {
-        Gson gson = new Gson();
-        String jsonContent = gson.toJson(repairDto);
-        String url = "http://localhost:8080/v1/carworkshop/api/repairs";
+        String url = appConfig.getBackendEndpoint()+"repairs";
+        restTemplate.postForObject(url,jsonBuilder.prepareJson(repairDto), Void.class);
+    }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(jsonContent,headers);
-        restTemplate.put(url,httpEntity);
-
+    public void update(RepairDto repairDto) {
+        String url = appConfig.getBackendEndpoint()+"repairs";
+        restTemplate.put(url,jsonBuilder.prepareJson(repairDto));
     }
 
     public List<RepairDto> filterByCarId(long carId) {
@@ -67,7 +62,7 @@ public class RepairService {
     }
 
     public void delete(long id) {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/repairs/"+id)
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"repairs/"+id)
                 .encode()
                 .build()
                 .toUri();
@@ -75,7 +70,7 @@ public class RepairService {
     }
 
     public double getCurrencyFactorFromNBP(String currencyCode) {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/currency/"+currencyCode)
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"currency/"+currencyCode)
                 .encode()
                 .build()
                 .toUri();
@@ -87,5 +82,4 @@ public class RepairService {
         }
 
     }
-
 }

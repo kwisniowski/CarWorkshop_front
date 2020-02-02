@@ -13,6 +13,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.stereotype.Component;
 
 @Setter
 @Getter
@@ -31,6 +32,7 @@ public class CarForm extends FormLayout {
     private TextField customerId = new TextField("Customer Id");
 
     private Button save = new Button("Save");
+    private Button update = new Button("Update");
     private CarService service = CarService.getInstance();
     private Binder<CarDto> binder = new Binder<>(CarDto.class);
 
@@ -44,17 +46,29 @@ public class CarForm extends FormLayout {
         brand.setAllowCustomValue(false);
         this.mainView = mainView;
         save.addClickListener(event -> save());
+        update.addClickListener(event -> update());
         binder.bindInstanceFields(this);
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        add(brand,model,manufactureYear,vinNumber,engineSize,plateNumber,bodyType,customerId,save);
+        update.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        add(brand,model,manufactureYear,vinNumber,engineSize,plateNumber,bodyType,customerId,save, update);
     }
 
     private void save() {
+        update.setVisible(false);
         CarDto carDto = binder.getBean();
         service.save(carDto);
         mainView.refresh();
         setCar(null);
     }
+
+    private void update() {
+        save.setVisible(false);
+        CarDto carDto = binder.getBean();
+        service.update(carDto);
+        mainView.refresh();
+        setCar(null);
+    }
+
 
     public void setCar(CarDto carDto) {
         binder.setBean(carDto);

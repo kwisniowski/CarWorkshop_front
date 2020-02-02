@@ -23,6 +23,7 @@ public class RepairForm extends FormLayout {
     private NumberField totalCost = new NumberField("TotalCost");
 
     private Button save = new Button("Save");
+    private Button update = new Button("Update");
     private RepairService service = RepairService.getInstance();
     private Binder<RepairDto> binder = new Binder<>(RepairDto.class);
 
@@ -32,14 +33,23 @@ public class RepairForm extends FormLayout {
 
         this.mainView = mainView;
         save.addClickListener(event -> save());
+        update.addClickListener(event-> update());
         binder.bindInstanceFields(this);
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        add(carId,startDate,endDate,totalCost,save);
+        update.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        add(carId,startDate,endDate,totalCost,save, update);
     }
 
     private void save() {
         RepairDto repairDto = binder.getBean();
         service.save(repairDto);
+        mainView.refresh();
+        setRepair(null);
+    }
+
+    private void update() {
+        RepairDto repairDto = binder.getBean();
+        service.update(repairDto);
         mainView.refresh();
         setRepair(null);
     }

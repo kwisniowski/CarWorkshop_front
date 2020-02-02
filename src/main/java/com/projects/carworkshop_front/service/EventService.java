@@ -1,12 +1,9 @@
 package com.projects.carworkshop_front.service;
 
-import com.projects.carworkshop_front.domain.ApplicationEvent;
+import com.projects.carworkshop_front.config.AppConfig;
 import com.projects.carworkshop_front.domain.dto.ApplicationEventDto;
-import com.projects.carworkshop_front.domain.dto.CustomerDto;
-import com.projects.carworkshop_front.domain.dto.RepairDto;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import java.net.URI;
 import java.util.*;
 
@@ -15,6 +12,7 @@ public class EventService {
     RestTemplate restTemplate = new RestTemplate();
     private static EventService eventService;
     private List<ApplicationEventDto> eventDtos;
+    private AppConfig appConfig = AppConfig.getInstance();
 
     private EventService() {
     }
@@ -31,7 +29,7 @@ public class EventService {
     }
 
     public void fetchAll() {
-        URI url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/v1/carworkshop/api/events")
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfig.getBackendEndpoint()+"events")
                 .encode()
                 .build()
                 .toUri();

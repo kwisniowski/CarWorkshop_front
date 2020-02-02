@@ -16,12 +16,14 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
+import org.springframework.stereotype.Component;
 
 
 import java.util.List;
 
 @Route
 @Getter
+@Component
 public class MainView extends VerticalLayout {
 
     private VerticalLayout customersLayout = new VerticalLayout();
@@ -139,6 +141,8 @@ public class MainView extends VerticalLayout {
                 addedCarDto.setCustomerId(String.valueOf(customerGrid.asSingleSelect().getValue().getId()));
                 carForm.getCustomerId().setValue(String.valueOf(customerGrid.asSingleSelect().getValue().getId()));
                 carForm.getCustomerId().setReadOnly(true);
+                carForm.getUpdate().setVisible(false);
+                carForm.getSave().setVisible(true);
                 carForm.setCar(addedCarDto);
             } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
         });
@@ -170,6 +174,8 @@ public class MainView extends VerticalLayout {
                 addedRepairDto.setCarId(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
                 repairForm.getCarId().setValue(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
                 repairForm.getCarId().setReadOnly(true);
+                repairForm.getUpdate().setVisible(false);
+                repairForm.getSave().setVisible(true);
                 repairForm.setRepair(addedRepairDto);
             } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
         });
@@ -178,6 +184,8 @@ public class MainView extends VerticalLayout {
             if (!(carGrid.asSingleSelect().getValue() == null)) {
                 carForm.setCar(carGrid.asSingleSelect().getValue());
                 carForm.getCustomerId().setReadOnly(true);
+                carForm.getSave().setVisible(false);
+                carForm.getUpdate().setVisible(true);
             } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
         });
 
@@ -243,12 +251,16 @@ public class MainView extends VerticalLayout {
         editCustomer.setVisible(false);
         addNewCustomer.addClickListener(event -> {
             customerGrid.asSingleSelect().clear();
+            customerForm.getSave().setVisible(true);
+            customerForm.getUpdate().setVisible(false);
             customerForm.setCustomer(new CustomerDto());
         });
 
         editCustomer.addClickListener(event -> {
             if (!(customerGrid.asSingleSelect().getValue() == null)) {
                 customerForm.setCustomer(customerGrid.asSingleSelect().getValue());
+                customerForm.getSave().setVisible(false);
+                customerForm.getUpdate().setVisible(true);
             } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
         });
 
@@ -334,6 +346,8 @@ public class MainView extends VerticalLayout {
         editRepair.addClickListener(event -> {
             if (!(repairGrid.asSingleSelect().getValue() == null)) {
                 repairForm.setRepair(repairGrid.asSingleSelect().getValue());
+                repairForm.getSave().setVisible(false);
+                repairForm.getUpdate().setVisible(true);
             }
         });
 
@@ -382,6 +396,8 @@ public class MainView extends VerticalLayout {
 
         addSparePart.addClickListener(event -> {
             sparePartForm.setSparePart(new SparePartDto());
+            sparePartForm.getUpdate().setVisible(false);
+            sparePartForm.getSave().setVisible(true);
         });
 
         deleteSparePart.addClickListener(event -> {
@@ -394,6 +410,8 @@ public class MainView extends VerticalLayout {
         editSparePart.addClickListener(event -> {
             if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
                 sparePartForm.setSparePart(sparePartsGrid.asSingleSelect().getValue());
+                sparePartForm.getUpdate().setVisible(true);
+                sparePartForm.getSave().setVisible(false);
             }
         });
 
