@@ -1,15 +1,7 @@
 package com.projects.carworkshop_front.service;
 
-import com.google.gson.Gson;
 import com.projects.carworkshop_front.config.AppConfig;
 import com.projects.carworkshop_front.domain.dto.CarDto;
-import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 

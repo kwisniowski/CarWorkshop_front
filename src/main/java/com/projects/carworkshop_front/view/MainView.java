@@ -16,14 +16,9 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
-import org.springframework.stereotype.Component;
-
-
-import java.util.List;
 
 @Route
 @Getter
-@Component
 public class MainView extends VerticalLayout {
 
     private VerticalLayout customersLayout = new VerticalLayout();
@@ -50,8 +45,8 @@ public class MainView extends VerticalLayout {
     private TextField carPlateFilterField = new TextField();
     private TextField carVinFilterField = new TextField();
     private Label searchLabel = new Label(" or ");
-    private HorizontalLayout carSearchFileds = new HorizontalLayout(carPlateFilterField,searchLabel,carVinFilterField);
-    private Button addCar = new Button ("Add car to customer");
+    private HorizontalLayout carSearchFileds = new HorizontalLayout(carPlateFilterField, searchLabel, carVinFilterField);
+    private Button addCar = new Button("Add car to customer");
     private Button removeCar = new Button("Delete car");
     private Button editCar = new Button("Edit car");
     private Button showCarRepairs = new Button("Show car repairs");
@@ -63,15 +58,15 @@ public class MainView extends VerticalLayout {
     private TextField customerNameFilterField = new TextField();
     private TextField customerCompanyFilterField = new TextField();
     private Label searchCustomerLabel = new Label(" or ");
-    private HorizontalLayout customerSearchFileds = new HorizontalLayout(customerNameFilterField,searchCustomerLabel,customerCompanyFilterField);
+    private HorizontalLayout customerSearchFileds = new HorizontalLayout(customerNameFilterField, searchCustomerLabel, customerCompanyFilterField);
 
-    private Button showCurrencyCalculator = new Button ("Show currency calculator");
+    private Button showCurrencyCalculator = new Button("Show currency calculator");
     private Label currencyPLNLabel = new Label("PLN");
     private Label currencyLabel = new Label(" = ");
     private NumberField currencyPLNValue = new NumberField();
     private ComboBox<RepairService.repairCurrency> currencyList = new ComboBox<>();
     private NumberField currencyResult = new NumberField("");
-    private Button hideCalculator = new Button ("Hide calculator");
+    private Button hideCalculator = new Button("Hide calculator");
     private HorizontalLayout currencyCalculator = new HorizontalLayout();
 
     private CustomerForm customerForm = new CustomerForm(this);
@@ -85,22 +80,22 @@ public class MainView extends VerticalLayout {
     private Button showCustomerMfInfo = new Button("Show MF status by NIP");
     private HorizontalLayout customerButtons = new HorizontalLayout();
 
-    private Button hideRepairsGrid = new Button ("Hide repair grid");
+    private Button hideRepairsGrid = new Button("Hide repair grid");
     private Button deleteRepair = new Button("Delete repair");
     private Button editRepair = new Button("Edit repair");
 
     private Button addCostToRepair = new Button("Add cost");
     private Label costLabel = new Label("Add as cost:");
-    private TextField sparePartSelected = new TextField ("");
+    private TextField sparePartSelected = new TextField("");
     private NumberField sparePartQty = new NumberField();
     private HorizontalLayout costAddingGroup = new HorizontalLayout();
     private HorizontalLayout repairButtons = new HorizontalLayout();
 
     private Label sparePartSearchLabel = new Label("Filter by brand");
     private ComboBox<Car.CarBrand> sparePartFilter = new ComboBox<>();
-    private Button showAllSparePartsButton = new Button ("Show all");
+    private Button showAllSparePartsButton = new Button("Show all");
     private HorizontalLayout sparePartFilterGroup = new HorizontalLayout();
-    private Button addSparePart = new Button ("Add spare part");
+    private Button addSparePart = new Button("Add spare part");
     private Button deleteSparePart = new Button("Delete spare part");
     private Button editSparePart = new Button("Edit spare part");
     private Button addPartButton = new Button("Add");
@@ -112,328 +107,56 @@ public class MainView extends VerticalLayout {
 
     public MainView() {
 
-        customersLayout.add(customersLabel);
-        customersLayout.setHorizontalComponentAlignment(Alignment.CENTER, customersLabel);
-        carsLayout.add(carsLabel);
-        carsLayout.setHorizontalComponentAlignment(Alignment.CENTER, carsLabel);
-        repairsLayout.add(repairsLabel);
-        repairsLayout.setHorizontalComponentAlignment(Alignment.CENTER, repairsLabel);
-        sparePartsLayout.add(sparePartsLabel);
-        sparePartsLayout.setHorizontalComponentAlignment(Alignment.CENTER, sparePartsLabel);
+        refresh();
 
-        ////////////////////////////// Cars section /////////////////////////////
+        prepareCustomerSectionControls();
+        customerGrid.asSingleSelect().addValueChangeListener(event -> customerGridClickEvent());
+        addNewCustomer.addClickListener(event -> addNewCustomer());
+        editCustomer.addClickListener(event -> editCustomer());
+        removeCustomer.addClickListener(event -> removeCustomer());
+        showCustomerMfInfo.addClickListener(event -> showMfApiiStatus());
 
-        carGrid.setColumns("id", "brand", "model", "manufactureYear", "vinNumber", "engineSize", "plateNumber", "bodyType", "customerId");
+        prepareCarControls();
+        addCar.addClickListener(event -> addCar());
+        removeCar.addClickListener(event -> removeCar());
+        addRepairToCar.addClickListener(event -> addRepairToCar());
+        editCar.addClickListener(event -> editCar());
+        showAllCars.addClickListener(event -> carGrid.setItems(carService.getCarDtos()));
+        filterCarsByCustomer.addClickListener(event -> filterCarByCustomer());
+        showCarRepairs.addClickListener(event -> showCarRepairs());
+        carGrid.asSingleSelect().addValueChangeListener(event -> carGridClickEvent());
+        hideRepairsGrid.addClickListener(event -> hideRepairs());
 
-        carPlateFilterField.setPlaceholder("Find by plate number");
-        carPlateFilterField.setClearButtonVisible(true);
-        carPlateFilterField.setValueChangeMode(ValueChangeMode.EAGER);
-        carPlateFilterField.addValueChangeListener(event -> carPlateFilerUpdate());
-
-        carVinFilterField.setPlaceholder("Find by VIN number");
-        carVinFilterField.setClearButtonVisible(true);
-        carVinFilterField.setValueChangeMode(ValueChangeMode.EAGER);
-        carVinFilterField.addValueChangeListener(event -> carVinFilerUpdate());
-
-        addCar.addClickListener(event -> {
-            if (!(customerGrid.asSingleSelect().getValue() == null)) {
-                CarDto addedCarDto = new CarDto();
-                addedCarDto.setCustomerId(String.valueOf(customerGrid.asSingleSelect().getValue().getId()));
-                carForm.getCustomerId().setValue(String.valueOf(customerGrid.asSingleSelect().getValue().getId()));
-                carForm.getCustomerId().setReadOnly(true);
-                carForm.getUpdate().setVisible(false);
-                carForm.getSave().setVisible(true);
-                carForm.setCar(addedCarDto);
-            } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
-        });
-
-        removeCar.setVisible(false);
-        editCar.setVisible(false);
-        showCarRepairs.setVisible(false);
-        addRepairToCar.setVisible(false);
-        hideRepairsGrid.setVisible(false);
-        repairButtons.setVisible(false);
-        showCustomerMfInfo.setVisible(false);
-        currencyCalculator.setVisible(false);
-        hideCalculator.setVisible(false);
-        costAddingGroup.setVisible(false);
-        addCostToRepair.setVisible(false);
-        eventGrid.setVisible(false);
-        hideLogs.setVisible(false);
-
-        removeCar.addClickListener(event -> {
-            if (!(carGrid.asSingleSelect().getValue() == null)) {
-                carService.delete(carGrid.asSingleSelect().getValue().getId());
-                refresh();
-            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
-        });
-
-        addRepairToCar.addClickListener(evemt -> {
-            if (!(carGrid.asSingleSelect().getValue() == null)) {
-                RepairDto addedRepairDto = new RepairDto();
-                addedRepairDto.setCarId(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
-                repairForm.getCarId().setValue(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
-                repairForm.getCarId().setReadOnly(true);
-                repairForm.getUpdate().setVisible(false);
-                repairForm.getSave().setVisible(true);
-                repairForm.setRepair(addedRepairDto);
-            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
-        });
-
-        editCar.addClickListener(event -> {
-            if (!(carGrid.asSingleSelect().getValue() == null)) {
-                carForm.setCar(carGrid.asSingleSelect().getValue());
-                carForm.getCustomerId().setReadOnly(true);
-                carForm.getSave().setVisible(false);
-                carForm.getUpdate().setVisible(true);
-            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
-        });
-
-        showAllCars.addClickListener(event ->
-                carGrid.setItems(carService.getCarDtos()));
-
-        carButtons.add(showCarRepairs, removeCar, addRepairToCar, editCar, showAllCars, hideRepairsGrid);
-
-        carGrid.asSingleSelect().addValueChangeListener(event -> {
-            removeCar.setVisible(true);
-            showCarRepairs.setVisible(true);
-            editCar.setVisible(true);
-            removeCar.setVisible(true);
-            addRepairToCar.setVisible(true);
-        });
+        prepareRepairControls();
+        repairGrid.addItemClickListener(event -> repairGridClickEvent());
+        deleteRepair.addClickListener(event -> deleteRepair());
+        editRepair.addClickListener(event -> editRepair());
+        addCostToRepair.addClickListener(event -> addCostToRepair());
+        addPartButton.addClickListener(event -> addPartButton());
+        showCurrencyCalculator.addClickListener(event -> showCurrencyCalculator());
+        hideCalculator.addClickListener(event -> hideCurrencyCalculator());
 
 
-        carGrid.addItemClickListener(listener -> {
-            if (listener.getClickCount() == 2) {
-                List<RepairDto> repairList = listener.getItem().getRepairDtos();
-                for (RepairDto repairDto : repairList) {
-                    Notification.show("Repair from: " + repairDto.getStartDate() + " to  " + repairDto.getEndDate() + "  , repair cost: " + repairDto.getTotalCost(),
-                            5000, Notification.Position.MIDDLE);
-                }
-            }
-        });
+        prepareSparePartControls();
+        sparePartsGrid.addItemClickListener(event -> sparePartGridClickEvent());
+        showAllSparePartsButton.addClickListener(event -> showAllSpareParts());
+        sparePartFilter.addValueChangeListener(event -> sparePartsFilterUpdate());
+        addSparePart.addClickListener(event -> addSparePart());
+        deleteSparePart.addClickListener(event -> deleteSparePart());
+        editSparePart.addClickListener(event -> editSparePart());
 
-        filterCarsByCustomer.setVisible(false);
-        filterCarsByCustomer.addClickListener(event -> {
-            if (!(customerGrid.asSingleSelect().getValue() == null)) {
-                carGrid.setItems(carService.filterByCustomerId(String.valueOf(customerGrid.asSingleSelect().getValue().getId())));
-            } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
-        });
-
-        showCarRepairs.addClickListener(event -> {
-            if (!(carGrid.asSingleSelect().getValue() == null)) {
-                repairGrid.setVisible(true);
-                hideRepairsGrid.setVisible(true);
-                repairService.fetchAll();
-                repairGrid.setItems(repairService.filterByCarId(carGrid.asSingleSelect().getValue().getId()));
-                hideRepairsGrid.setVisible(true);
-            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
-        });
-
-        hideRepairsGrid.addClickListener(event -> {
-            repairGrid.setVisible(false);
-            repairButtons.setVisible(false);
-        });
-
-
-        ////////////////////////////// Customers section /////////////////////////////
-
-        customerNameFilterField.setPlaceholder("Find by lastname");
-        customerNameFilterField.setClearButtonVisible(true);
-        customerNameFilterField.setValueChangeMode(ValueChangeMode.EAGER);
-        customerNameFilterField.addValueChangeListener(event -> customerNameFilerUpdate());
-
-        customerCompanyFilterField.setPlaceholder("Find by company name");
-        customerCompanyFilterField.setClearButtonVisible(true);
-        customerCompanyFilterField.setValueChangeMode(ValueChangeMode.EAGER);
-        customerCompanyFilterField.addValueChangeListener(event -> customerCompanyFilerUpdate());
-
-        editCustomer.setVisible(false);
-        addNewCustomer.addClickListener(event -> {
-            customerGrid.asSingleSelect().clear();
-            customerForm.getSave().setVisible(true);
-            customerForm.getUpdate().setVisible(false);
-            customerForm.setCustomer(new CustomerDto());
-        });
-
-        editCustomer.addClickListener(event -> {
-            if (!(customerGrid.asSingleSelect().getValue() == null)) {
-                customerForm.setCustomer(customerGrid.asSingleSelect().getValue());
-                customerForm.getSave().setVisible(false);
-                customerForm.getUpdate().setVisible(true);
-            } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
-        });
-
-        showCustomerMfInfo.addClickListener(event -> {
-            if (!(customerGrid.asSingleSelect().getValue() == null)) {
-                showCustomerMfInfo.setVisible(true);
-                customerService.showCustomerMfInfo(customerGrid.asSingleSelect().getValue().getNipNumber());
-                Notification.show(customerService.showCustomerMfInfo(customerGrid.asSingleSelect().getValue().getNipNumber()).toString(),
-                        5000, Notification.Position.MIDDLE);
-            }
-        });
-
-        customerGrid.setColumns("id", "firstname", "lastname", "company", "nipNumber", "accountNumber", "regonNumber", "emailAddress",
-                "phoneNumber", "vipCustomer", "companyCustomer");
-        removeCustomer.setVisible(false);
-        customerButtons.add(addNewCustomer, removeCustomer, addCar, filterCarsByCustomer, editCustomer, showCustomerMfInfo);
-        removeCustomer.addClickListener(event -> {
-            if (!(customerGrid.asSingleSelect().getValue() == null)) {
-                Long idToBeDeleted = customerGrid.asSingleSelect().getValue().getId();
-                customerService.delete(idToBeDeleted);
-                refresh();
-            } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
-        });
-        customerGrid.asSingleSelect().addValueChangeListener(event -> {
-            removeCustomer.setVisible(true);
-            showCustomerMfInfo.setVisible(true);
-            editCustomer.setVisible(true);
-            addCar.setVisible(true);
-            filterCarsByCustomer.setVisible(true);
-        });
-
-        ////////////////////////////// Invoices section /////////////////////////////
-
-        currencyList.setItems(RepairService.repairCurrency.values());
-        currencyList.setAllowCustomValue(false);
-        currencyList.setValue(RepairService.repairCurrency.EUR);
-        currencyCalculator.add(currencyPLNValue, currencyPLNLabel, currencyLabel, currencyResult, currencyList, hideCalculator);
-
-        showCurrencyCalculator.addClickListener(event -> {
-            hideCalculator.setVisible(true);
-            currencyCalculator.setVisible(true);
-        });
-
-        hideCalculator.addClickListener(event -> currencyCalculator.setVisible(false));
-        currencyList.addValueChangeListener(event -> {
-            double factor = repairService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
-            currencyResult.setValue(currencyPLNValue.getValue() / factor);
-        });
-
-        currencyPLNValue.addValueChangeListener(event -> {
-            double factor = repairService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
-            currencyResult.setValue(currencyPLNValue.getValue() / factor);
-        });
+        prepareEventsControls();
+        showLogs.addClickListener(event -> showLogs());
+        hideLogs.addClickListener(event -> hideLogs());
 
         add(customersLayout, customerSearchFileds, customerGrid, customerButtons, carForm, customerForm, carsLayout, carSearchFileds, carGrid, carButtons,
                 repairsLayout, repairGrid, repairForm, repairButtons, addCostToRepair, sparePartsLayout, sparePartFilterGroup, sparePartsGrid, addSparePart,
                 sparePartsButtons, sparePartForm, showLogs, hideLogs, eventGrid);
 
-        //////////////////////////////////////////////////////////////////////////////
+        hideButtons();
+        hideForms();
 
-        customerForm.setCustomer(null);
-        carForm.setCar(null);
-        repairForm.setRepair(null);
-        addCar.setVisible(false);
-        refresh();
-
-        /////////////////////////////// Repairs section ///////////////////////////////
-
-        repairGrid.setColumns("id", "startDate", "endDate", "totalCost");
-        repairGrid.addItemClickListener(event -> {
-            repairButtons.setVisible(true);
-            addCostToRepair.setVisible(true);
-        });
-        repairButtons.add(editRepair, deleteRepair, showCurrencyCalculator, currencyCalculator, costAddingGroup);
-
-        deleteRepair.addClickListener(event -> {
-            if (!(repairGrid.asSingleSelect().getValue() == null)) {
-                repairService.delete(repairGrid.asSingleSelect().getValue().getId());
-                refresh();
-            } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
-        });
-
-        editRepair.addClickListener(event -> {
-            if (!(repairGrid.asSingleSelect().getValue() == null)) {
-                repairForm.setRepair(repairGrid.asSingleSelect().getValue());
-                repairForm.getSave().setVisible(false);
-                repairForm.getUpdate().setVisible(true);
-            }
-        });
-
-        costAddingGroup.add(costLabel, sparePartSelected, sparePartQty, addPartButton);
-
-        addCostToRepair.addClickListener(event -> {
-            costAddingGroup.setVisible(true);
-            sparePartsGrid.setVisible(true);
-        });
-
-        addPartButton.addClickListener(event -> {
-            if (!(repairGrid.asSingleSelect().getValue() == null)) {
-                if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
-                    RepairDto tempRepairDto = repairGrid.asSingleSelect().getValue();
-                    double tempCost = tempRepairDto.getTotalCost();
-                    if ((sparePartQty.getValue() != null)) {
-                        if (sparePartQty.getValue() > 0) {
-                            repairGrid.asSingleSelect().getValue().setTotalCost(tempCost + (sparePartsGrid.asSingleSelect().getValue().getPrice() *
-                                    sparePartQty.getValue()));
-                            repairService.save(tempRepairDto);
-                            refresh();
-                        }
-                    }
-                } else Notification.show("Please select spare part to update", 2000, Notification.Position.MIDDLE);
-            } else Notification.show("Please select repair to update", 2000, Notification.Position.MIDDLE);
-            costAddingGroup.setVisible(false);
-        });
-
-        /////////////////////////////// SpareParts section ///////////////////////////////
-
-        sparePartFilterGroup.add(sparePartSearchLabel, sparePartFilter, showAllSparePartsButton);
-        sparePartsButtons.add(editSparePart, deleteSparePart);
-        sparePartsGrid.setColumns("id", "carBrand", "model", "manufacturer", "price");
-        sparePartForm.setSparePart(null);
-        sparePartsGrid.addItemClickListener(event -> {
-            sparePartsButtons.setVisible(true);
-            sparePartSelected.setValue(sparePartsGrid.asSingleSelect().getValue().getModel());
-        });
-        showAllSparePartsButton.addClickListener(event -> {
-            sparePartsGrid.setItems(sparePartService.getSparePartDtos());
-        });
-
-        sparePartFilter.setItems(Car.CarBrand.values());
-        sparePartFilter.setAllowCustomValue(false);
-        sparePartFilter.addValueChangeListener(event -> sparePartsFilterUpdate());
-
-        addSparePart.addClickListener(event -> {
-            sparePartForm.setSparePart(new SparePartDto());
-            sparePartForm.getUpdate().setVisible(false);
-            sparePartForm.getSave().setVisible(true);
-        });
-
-        deleteSparePart.addClickListener(event -> {
-            if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
-                sparePartService.delete(sparePartsGrid.asSingleSelect().getValue().getId());
-                refresh();
-            } else Notification.show("Please select spare part", 2000, Notification.Position.MIDDLE);
-        });
-
-        editSparePart.addClickListener(event -> {
-            if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
-                sparePartForm.setSparePart(sparePartsGrid.asSingleSelect().getValue());
-                sparePartForm.getUpdate().setVisible(true);
-                sparePartForm.getSave().setVisible(false);
-            }
-        });
-
-
-        ///////////////////////////////////  Events section  ////////////////////////////////////////
-
-        showLogs.addClickListener(event -> {
-            eventGrid.setVisible(true);
-            hideLogs.setVisible(true);
-        });
-        hideLogs.addClickListener(event -> {
-            eventGrid.setVisible(false);
-            hideLogs.setVisible(false);
-        });
-
-        eventGrid.setColumns("id", "type", "date", "time", "info");
-        eventGrid.setItems(eventService.getEvents());
     }
-    private String type;
-    private String date;
-    private String time;
-    private String info;
 
     public void refresh() {
         carService.fetchAll();
@@ -469,5 +192,319 @@ public class MainView extends VerticalLayout {
         sparePartsGrid.setItems(sparePartService.filterByCarBrand(sparePartFilter.getValue().toString()));
     }
 
+    private void hideButtons() {
+        removeCar.setVisible(false);
+        editCar.setVisible(false);
+        showCarRepairs.setVisible(false);
+        addRepairToCar.setVisible(false);
+        hideRepairsGrid.setVisible(false);
+        repairButtons.setVisible(false);
+        showCustomerMfInfo.setVisible(false);
+        currencyCalculator.setVisible(false);
+        hideCalculator.setVisible(false);
+        costAddingGroup.setVisible(false);
+        addCostToRepair.setVisible(false);
+        eventGrid.setVisible(false);
+        hideLogs.setVisible(false);
+        editCustomer.setVisible(false);
+        removeCustomer.setVisible(false);
+        addCar.setVisible(false);
+        filterCarsByCustomer.setVisible(false);
+    }
+
+    private void hideForms() {
+        customerForm.setCustomer(null);
+        carForm.setCar(null);
+        repairForm.setRepair(null);
+        sparePartForm.setSparePart(null);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+
+    private void prepareCustomerSectionControls() {
+        customersLayout.add(customersLabel);
+        customersLayout.setHorizontalComponentAlignment(Alignment.CENTER, customersLabel);
+
+        customerNameFilterField.setPlaceholder("Find by lastname");
+        customerNameFilterField.setClearButtonVisible(true);
+        customerNameFilterField.setValueChangeMode(ValueChangeMode.EAGER);
+        customerNameFilterField.addValueChangeListener(event -> customerNameFilerUpdate());
+
+        customerCompanyFilterField.setPlaceholder("Find by company name");
+        customerCompanyFilterField.setClearButtonVisible(true);
+        customerCompanyFilterField.setValueChangeMode(ValueChangeMode.EAGER);
+        customerCompanyFilterField.addValueChangeListener(event -> customerCompanyFilerUpdate());
+
+        customerGrid.setColumns("id", "firstname", "lastname", "company", "nipNumber", "accountNumber", "regonNumber", "emailAddress",
+                "phoneNumber", "vipCustomer", "companyCustomer");
+
+        customerButtons.add(addNewCustomer, removeCustomer, addCar, filterCarsByCustomer, editCustomer, showCustomerMfInfo);
+    }
+
+    private void addNewCustomer() {
+        customerGrid.asSingleSelect().clear();
+        customerForm.getSave().setVisible(true);
+        customerForm.getUpdate().setVisible(false);
+        customerForm.setCustomer(new CustomerDto());
+    }
+
+    private void editCustomer() {
+        if (!(customerGrid.asSingleSelect().getValue() == null)) {
+            customerForm.setCustomer(customerGrid.asSingleSelect().getValue());
+            customerForm.getSave().setVisible(false);
+            customerForm.getUpdate().setVisible(true);
+        } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void removeCustomer() {
+        if (!(customerGrid.asSingleSelect().getValue() == null)) {
+            Long idToBeDeleted = customerGrid.asSingleSelect().getValue().getId();
+            customerService.delete(idToBeDeleted);
+            refresh();
+        } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void showMfApiiStatus() {
+        if (!(customerGrid.asSingleSelect().getValue() == null)) {
+            showCustomerMfInfo.setVisible(true);
+            customerService.showCustomerMfInfo(customerGrid.asSingleSelect().getValue().getNipNumber());
+            Notification.show(customerService.showCustomerMfInfo(customerGrid.asSingleSelect().getValue().getNipNumber()).toString(),
+                    5000, Notification.Position.MIDDLE);
+        }
+    }
+
+    private void customerGridClickEvent() {
+        removeCustomer.setVisible(true);
+        showCustomerMfInfo.setVisible(true);
+        editCustomer.setVisible(true);
+        addCar.setVisible(true);
+        filterCarsByCustomer.setVisible(true);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+
+    private void prepareCarControls() {
+        carGrid.setColumns("id", "brand", "model", "manufactureYear", "vinNumber", "engineSize", "plateNumber", "bodyType", "customerId");
+
+        carsLayout.add(carsLabel);
+        carsLayout.setHorizontalComponentAlignment(Alignment.CENTER, carsLabel);
+
+        carPlateFilterField.setPlaceholder("Find by plate number");
+        carPlateFilterField.setClearButtonVisible(true);
+        carPlateFilterField.setValueChangeMode(ValueChangeMode.EAGER);
+        carPlateFilterField.addValueChangeListener(event -> carPlateFilerUpdate());
+
+        carVinFilterField.setPlaceholder("Find by VIN number");
+        carVinFilterField.setClearButtonVisible(true);
+        carVinFilterField.setValueChangeMode(ValueChangeMode.EAGER);
+        carVinFilterField.addValueChangeListener(event -> carVinFilerUpdate());
+
+        carButtons.add(showCarRepairs, removeCar, addRepairToCar, editCar, showAllCars, hideRepairsGrid);
+    }
+
+    private void addCar() {
+        if (!(customerGrid.asSingleSelect().getValue() == null)) {
+            CarDto addedCarDto = new CarDto();
+            addedCarDto.setCustomerId(String.valueOf(customerGrid.asSingleSelect().getValue().getId()));
+            carForm.getCustomerId().setValue(String.valueOf(customerGrid.asSingleSelect().getValue().getId()));
+            carForm.getCustomerId().setReadOnly(true);
+            carForm.getUpdate().setVisible(false);
+            carForm.getSave().setVisible(true);
+            carForm.setCar(addedCarDto);
+        } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
+
+    }
+
+    private void removeCar() {
+        if (!(carGrid.asSingleSelect().getValue() == null)) {
+            carService.delete(carGrid.asSingleSelect().getValue().getId());
+            refresh();
+        } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void addRepairToCar() {
+        if (!(carGrid.asSingleSelect().getValue() == null)) {
+            RepairDto addedRepairDto = new RepairDto();
+            addedRepairDto.setCarId(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
+            repairForm.getCarId().setValue(String.valueOf(carGrid.asSingleSelect().getValue().getId()));
+            repairForm.getCarId().setReadOnly(true);
+            repairForm.getUpdate().setVisible(false);
+            repairForm.getSave().setVisible(true);
+            repairForm.setRepair(addedRepairDto);
+        } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void editCar() {
+        if (!(carGrid.asSingleSelect().getValue() == null)) {
+            carForm.setCar(carGrid.asSingleSelect().getValue());
+            carForm.getCustomerId().setReadOnly(true);
+            carForm.getSave().setVisible(false);
+            carForm.getUpdate().setVisible(true);
+        } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void filterCarByCustomer() {
+        if (!(customerGrid.asSingleSelect().getValue() == null)) {
+            carGrid.setItems(carService.filterByCustomerId(String.valueOf(customerGrid.asSingleSelect().getValue().getId())));
+        } else Notification.show("Please select customer", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void showCarRepairs() {
+        if (!(carGrid.asSingleSelect().getValue() == null)) {
+            repairGrid.setVisible(true);
+            hideRepairsGrid.setVisible(true);
+            repairService.fetchAll();
+            repairGrid.setItems(repairService.filterByCarId(carGrid.asSingleSelect().getValue().getId()));
+            hideRepairsGrid.setVisible(true);
+        } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void hideRepairs() {
+        repairGrid.setVisible(false);
+        repairButtons.setVisible(false);
+    }
+
+    private void carGridClickEvent() {
+        removeCar.setVisible(true);
+        showCarRepairs.setVisible(true);
+        editCar.setVisible(true);
+        removeCar.setVisible(true);
+        addRepairToCar.setVisible(true);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+
+    private void prepareRepairControls() {
+        repairsLayout.add(repairsLabel);
+        repairsLayout.setHorizontalComponentAlignment(Alignment.CENTER, repairsLabel);
+        repairGrid.setColumns("id", "startDate", "endDate", "totalCost");
+        repairButtons.add(editRepair, deleteRepair, showCurrencyCalculator, currencyCalculator, costAddingGroup);
+        costAddingGroup.add(costLabel, sparePartSelected, sparePartQty, addPartButton);
+
+        currencyList.setItems(RepairService.repairCurrency.values());
+        currencyList.setAllowCustomValue(false);
+        currencyList.setValue(RepairService.repairCurrency.EUR);
+        currencyCalculator.add(currencyPLNValue, currencyPLNLabel, currencyLabel, currencyResult, currencyList, hideCalculator);
+
+        currencyPLNValue.addValueChangeListener(event -> {
+            double factor = repairService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
+            currencyResult.setValue(currencyPLNValue.getValue() / factor);
+        });
+        sparePartQty.setPlaceholder("Quantity");
+        sparePartSelected.setPlaceholder("Select on parts grid");
+    }
+
+    private void repairGridClickEvent() {
+        repairButtons.setVisible(true);
+        addCostToRepair.setVisible(true);
+    }
+
+    private void deleteRepair() {
+        if (!(repairGrid.asSingleSelect().getValue() == null)) {
+            repairService.delete(repairGrid.asSingleSelect().getValue().getId());
+            refresh();
+        } else Notification.show("Please select car", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void editRepair() {
+        if (!(repairGrid.asSingleSelect().getValue() == null)) {
+            repairForm.setRepair(repairGrid.asSingleSelect().getValue());
+            repairForm.getSave().setVisible(false);
+            repairForm.getUpdate().setVisible(true);
+        }
+    }
+
+    private void addPartButton() {
+        if (!(repairGrid.asSingleSelect().getValue() == null)) {
+            if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
+                RepairDto tempRepairDto = repairGrid.asSingleSelect().getValue();
+                double tempCost = tempRepairDto.getTotalCost();
+                if ((sparePartQty.getValue() != null)) {
+                    if (sparePartQty.getValue() > 0) {
+                        repairGrid.asSingleSelect().getValue().setTotalCost(tempCost + (sparePartsGrid.asSingleSelect().getValue().getPrice() *
+                                sparePartQty.getValue()));
+                        repairService.save(tempRepairDto);
+                        refresh();
+                    }
+                }
+            } else Notification.show("Please select spare part to update", 2000, Notification.Position.MIDDLE);
+        } else Notification.show("Please select repair to update", 2000, Notification.Position.MIDDLE);
+        costAddingGroup.setVisible(false);
+    }
+
+    private void addCostToRepair() {
+        costAddingGroup.setVisible(true);
+        sparePartsGrid.setVisible(true);
+    }
+
+    private void showCurrencyCalculator() {
+        hideCalculator.setVisible(true);
+        currencyCalculator.setVisible(true);
+    }
+
+    private void hideCurrencyCalculator() {
+        currencyCalculator.setVisible(false);
+        currencyList.addValueChangeListener(event -> {
+            double factor = repairService.getCurrencyFactorFromNBP(currencyList.getValue().toString());
+            currencyResult.setValue(currencyPLNValue.getValue() / factor);
+        });
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+
+    private void prepareSparePartControls() {
+        sparePartsLayout.add(sparePartsLabel);
+        sparePartsLayout.setHorizontalComponentAlignment(Alignment.CENTER, sparePartsLabel);
+        sparePartFilterGroup.add(sparePartSearchLabel, sparePartFilter, showAllSparePartsButton);
+        sparePartsButtons.add(editSparePart, deleteSparePart);
+        sparePartsGrid.setColumns("id", "carBrand", "model", "manufacturer", "price");
+        sparePartFilter.setItems(Car.CarBrand.values());
+        sparePartFilter.setAllowCustomValue(false);
+    }
+
+    private void sparePartGridClickEvent() {
+        sparePartsButtons.setVisible(true);
+        sparePartSelected.setValue(sparePartsGrid.asSingleSelect().getValue().getModel());
+    }
+
+    private void addSparePart() {
+        sparePartForm.setSparePart(new SparePartDto());
+        sparePartForm.getUpdate().setVisible(false);
+        sparePartForm.getSave().setVisible(true);
+    }
+
+    private void deleteSparePart() {
+        if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
+            sparePartService.delete(sparePartsGrid.asSingleSelect().getValue().getId());
+            refresh();
+        } else Notification.show("Please select spare part", 2000, Notification.Position.MIDDLE);
+    }
+
+    private void editSparePart() {
+        if (!(sparePartsGrid.asSingleSelect().getValue() == null)) {
+            sparePartForm.setSparePart(sparePartsGrid.asSingleSelect().getValue());
+            sparePartForm.getUpdate().setVisible(true);
+            sparePartForm.getSave().setVisible(false);
+        }
+    }
+
+    private void prepareEventsControls() {
+        eventGrid.setColumns("id", "type", "date", "time", "info");
+        eventGrid.setItems(eventService.getEvents());
+    }
+
+    private void showLogs() {
+        eventGrid.setVisible(true);
+        hideLogs.setVisible(true);
+    }
+
+    private void hideLogs() {
+        eventGrid.setVisible(false);
+        hideLogs.setVisible(false);
+    }
+
+    private void showAllSpareParts() {
+        sparePartsGrid.setItems(sparePartService.getSparePartDtos());
+    }
 
 }
